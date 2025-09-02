@@ -1,12 +1,9 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -16,19 +13,13 @@ model User {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   
-  // User stats
   totalTransactions Int @default(0)
   totalVolume       Float @default(0)
-  
-  // Gaming stats
   gameScore         Int @default(0)
   gamesPlayed       Int @default(0)
   nftRewards        Int @default(0)
-  
-  // Learning progress
   lessonsCompleted  Int @default(0)
   
-  // Relations
   transactions Transaction[]
   stakingRecords StakingRecord[]
   gameResults GameResult[]
@@ -39,19 +30,18 @@ model User {
 model Transaction {
   id          String   @id @default(cuid())
   signature   String   @unique
-  type        String   // send, swap, stake, unstake, claim
+  type        String
   amount      Float
   token       String
   fromAddress String?
   toAddress   String?
-  status      String   // pending, confirmed, failed
+  status      String
   fee         Float    @default(0)
   slot        Int?
   blockTime   DateTime?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   
-  // Relations
   userId String
   user   User   @relation(fields: [userId], references: [id])
   
@@ -67,11 +57,10 @@ model StakingRecord {
   rewardsClaimed Float   @default(0)
   isActive      Boolean  @default(true)
   apy           Float
-  lockPeriod    Int      // in days
+  lockPeriod    Int
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   
-  // Relations
   userId String
   user   User   @relation(fields: [userId], references: [id])
   
@@ -82,14 +71,13 @@ model GameResult {
   id          String   @id @default(cuid())
   score       Int
   totalQuestions Int
-  timeSpent   Int      // in seconds
+  timeSpent   Int
   category    String
   rewardClaimed Boolean @default(false)
   rewardAmount Float   @default(0)
   nftMinted   Boolean  @default(false)
   createdAt   DateTime @default(now())
   
-  // Relations
   userId String
   user   User   @relation(fields: [userId], references: [id])
   
@@ -113,7 +101,7 @@ model StakingPool {
   poolId      Int      @unique
   totalStaked Float    @default(0)
   apy         Float
-  lockPeriod  Int      // in days
+  lockPeriod  Int
   totalRewards Float   @default(0)
   isActive    Boolean  @default(true)
   contractAddress String?

@@ -8,3 +8,6 @@ keypairs
 prisma/dev.db
 lib/transaction-tracker-old.ts
 pages/swap-old.tsx
+scripts/
+deploy-*.sh
+deploy-*.js
