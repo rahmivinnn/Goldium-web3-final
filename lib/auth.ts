@@ -93,6 +93,7 @@ export const submitGameScore = async (
   category: string = 'mixed'
 ) => {
   try {
+    // Try main API first
     const response = await axios.post('/api/game/submit-score', {
       walletAddress,
       score,
@@ -102,8 +103,22 @@ export const submitGameScore = async (
     });
     return response.data;
   } catch (error) {
-    console.error('Error submitting game score:', error);
-    throw error;
+    console.error('Main API failed, trying simple API:', error);
+    
+    // Fallback to simple API
+    try {
+      const response = await axios.post('/api/simple/game', {
+        walletAddress,
+        score,
+        totalQuestions,
+        timeSpent,
+        category
+      });
+      return response.data;
+    } catch (fallbackError) {
+      console.error('Error submitting game score:', fallbackError);
+      throw fallbackError;
+    }
   }
 };
 
