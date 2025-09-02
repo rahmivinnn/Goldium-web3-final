@@ -1,10 +1,10 @@
-﻿import React, { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from '../lib/wallet-context';
 import { useWalletStore } from '../lib/store';
 import { getWalletBalances } from '../lib/solana';
 import { motion } from 'framer-motion';
-import { Coins, Zap, BookOpen, Gamepad2 } from 'lucide-react';
+import { Coins, Zap, BookOpen, Gamepad2, Activity, Star } from 'lucide-react';
 import Link from 'next/link';
 
 const Navbar: React.FC = () => {
@@ -33,6 +33,8 @@ const Navbar: React.FC = () => {
     { name: 'Send', href: '/send', icon: Coins },
     { name: 'Swap', href: '/swap', icon: Zap },
     { name: 'Stake', href: '/stake', icon: Coins },
+    { name: 'Dashboard', href: '/dashboard', icon: Activity },
+    { name: 'Characters', href: '/characters', icon: Star },
     { name: 'Game', href: '/game', icon: Gamepad2 },
     { name: 'Learn', href: '/learn', icon: BookOpen },
   ];

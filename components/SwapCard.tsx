@@ -6,6 +6,7 @@ import { ArrowUpDown, Coins, Zap, TrendingUp, ExternalLink } from 'lucide-react'
 import toast from 'react-hot-toast';
 import { getSolscanUrl } from '../lib/solana';
 import { executeJupiterSwap, getJupiterQuote, TOKEN_MINTS } from '../lib/jupiter';
+import { trackTransaction, showSolscanNotification } from '../lib/transaction-tracker';
 
 const SwapCard: React.FC = () => {
   const { publicKey, sendTransaction } = useWallet();
@@ -105,23 +106,23 @@ const SwapCard: React.FC = () => {
       
       if (signature) {
         setLastSwapSignature(signature);
-        toast.success('Swap completed successfully!');
         
-        // Show Solscan link
-        const solscanUrl = getSolscanUrl(signature);
-        toast.success(
-          <div>
-            <p>Swap completed successfully!</p>
-            <a 
-              href={solscanUrl} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-blue-400 hover:text-blue-300 underline"
-            >
-              View on Solscan 
-            </a>
-          </div>,
-          { duration: 8000 }
+        // Track transaction with comprehensive Solscan integration
+        await trackTransaction(
+          signature,
+          'swap',
+          parseFloat(fromAmount),
+          `${fromToken} → ${toToken}`,
+          publicKey.toString()
+        );
+
+        // Show enhanced Solscan notification
+        showSolscanNotification(
+          signature,
+          'swap',
+          parseFloat(fromAmount),
+          `${fromToken} → ${toToken}`,
+          `Price: ${price.toFixed(6)} ${toToken}/${fromToken}`
         );
         
         // Reset form

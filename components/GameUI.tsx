@@ -1,8 +1,10 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Gamepad2, Trophy, Star, Coins, BookOpen, Zap } from 'lucide-react';
+import { Gamepad2, Trophy, Star, Coins, BookOpen, Zap, ExternalLink } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { getSolscanUrl } from '../lib/solana';
+import { trackTransaction, showSolscanNotification } from '../lib/transaction-tracker';
 
 interface Question {
   id: number;
@@ -184,7 +186,29 @@ const GameUI: React.FC = () => {
     try {
       // Mock reward claiming - in real implementation, this would mint an NFT or send GOLD tokens
       await new Promise(resolve => setTimeout(resolve, 2000));
-      toast.success('Reward claimed! Check your wallet! ');
+      
+      // Mock transaction signature for reward claiming
+      const mockSignature = `reward_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
+      // Track reward transaction
+      await trackTransaction(
+        mockSignature,
+        'claim',
+        gameState.score * 10, // Reward amount based on score
+        'GOLD',
+        publicKey.toString()
+      );
+
+      // Show enhanced Solscan notification for reward
+      showSolscanNotification(
+        mockSignature,
+        'claim',
+        gameState.score * 10,
+        'GOLD',
+        `Game Score: ${gameState.score}/${questions.length} • Bonus: ${gameState.score >= 8 ? 'Perfect!' : 'Good Job!'}`
+      );
+
+      toast.success('🎉 Reward claimed! Check your wallet and Solscan! ');
     } catch (error) {
       toast.error('Failed to claim reward');
     }

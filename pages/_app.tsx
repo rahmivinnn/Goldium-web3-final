@@ -1,5 +1,7 @@
-﻿import type { AppProps } from 'next/app';
+import type { AppProps } from 'next/app';
 import { WalletContextProvider } from '../lib/wallet-context';
+import TransactionNotifications from '../components/TransactionNotifications';
+import SolscanTracker from '../components/SolscanTracker';
 import '../styles/globals.css';
 import { Toaster } from 'react-hot-toast';
 
@@ -8,8 +10,10 @@ export default function App({ Component, pageProps }: AppProps) {
     <WalletContextProvider>
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
         <Component {...pageProps} />
+        <TransactionNotifications />
+        <SolscanTracker />
         <Toaster
-          position="top-right"
+          position="bottom-right"
           toastOptions={{
             duration: 4000,
             style: {

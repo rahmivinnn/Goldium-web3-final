@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Coins, TrendingUp, Clock, Award, ExternalLink } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { getSolscanUrl, connection } from '../lib/solana';
+import { trackTransaction, showSolscanNotification } from '../lib/transaction-tracker';
 import { 
   getStakingPoolData, 
   getUserStakeData, 
@@ -94,27 +95,26 @@ const StakeCard: React.FC = () => {
       const transaction = await createStakeTransaction(publicKey, parseFloat(amount) * 1e6); // Convert to smallest unit
       const signature = await sendTransaction(transaction, connection);
       
+      // Track transaction with comprehensive Solscan integration
+      await trackTransaction(
+        signature,
+        'stake',
+        parseFloat(amount),
+        'GOLD',
+        publicKey.toString()
+      );
+
       // Wait for confirmation
       await connection.confirmTransaction(signature, 'confirmed');
       setLastTransactionSignature(signature);
-      
-      toast.success('Successfully staked GOLD tokens!');
-      
-      // Show Solscan link
-      const solscanUrl = getSolscanUrl(signature);
-      toast.success(
-        <div>
-          <p>Staking successful!</p>
-          <a 
-            href={solscanUrl} 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="text-blue-400 hover:text-blue-300 underline"
-          >
-            View on Solscan 
-          </a>
-        </div>,
-        { duration: 8000 }
+
+      // Show enhanced Solscan notification
+      showSolscanNotification(
+        signature,
+        'stake',
+        parseFloat(amount),
+        'GOLD',
+        `APY: ${stakingData.apy}% • Lock Period: ${stakingData.stakingPeriod} days`
       );
       
       // Update staking data

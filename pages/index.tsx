@@ -1,13 +1,26 @@
-﻿import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Navbar from '../components/Navbar';
 import WalletConnect from '../components/WalletConnect';
+import SplashScreen from '../components/SplashScreen';
+import TransactionHistory from '../components/TransactionHistory';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Coins, Zap, Gamepad2, BookOpen, TrendingUp, Shield } from 'lucide-react';
 import Link from 'next/link';
 
 const Home: React.FC = () => {
   const { connected } = useWallet();
+  const [showSplash, setShowSplash] = useState(true);
+
+  // Show splash screen on first visit
+  useEffect(() => {
+    const hasVisited = localStorage.getItem('goldium_visited');
+    if (hasVisited) {
+      setShowSplash(false);
+    } else {
+      localStorage.setItem('goldium_visited', 'true');
+    }
+  }, []);
 
   const features = [
     {
@@ -53,6 +66,16 @@ const Home: React.FC = () => {
       color: 'from-yellow-500 to-gold-500'
     }
   ];
+
+  // Handle splash screen completion
+  const handleSplashComplete = () => {
+    setShowSplash(false);
+  };
+
+  // Show splash screen
+  if (showSplash) {
+    return <SplashScreen onComplete={handleSplashComplete} />;
+  }
 
   return (
     <div className="min-h-screen">
@@ -199,6 +222,9 @@ const Home: React.FC = () => {
           </div>
         </section>
       </main>
+      
+      {/* Transaction History Component */}
+      <TransactionHistory />
     </div>
   );
 };

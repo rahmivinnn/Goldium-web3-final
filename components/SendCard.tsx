@@ -1,8 +1,9 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { createTransferInstruction, getAssociatedTokenAddress, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { connection, GOLD_TOKEN_MINT, confirmTransaction, getSolscanUrl } from '../lib/solana';
+import { trackTransaction, showSolscanNotification } from '../lib/transaction-tracker';
 import { motion } from 'framer-motion';
 import { Send, Coins, Zap, ExternalLink } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -66,24 +67,25 @@ const SendCard: React.FC<SendCardProps> = ({ onTransactionComplete }) => {
         signature = await sendTransaction(transaction, connection);
       }
 
+      // Track transaction with comprehensive Solscan integration
+      await trackTransaction(
+        signature,
+        'send',
+        amountNum,
+        tokenType,
+        publicKey.toString(),
+        recipient
+      );
+
       await confirmTransaction(signature);
-      toast.success('Transaction successful!');
-      
-      // Show Solscan link
-      const solscanUrl = getSolscanUrl(signature);
-      toast.success(
-        <div>
-          <p>Transaction successful!</p>
-          <a 
-            href={solscanUrl} 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="text-blue-400 hover:text-blue-300 underline"
-          >
-            View on Solscan 
-          </a>
-        </div>,
-        { duration: 8000 }
+
+      // Show enhanced Solscan notification
+      showSolscanNotification(
+        signature,
+        'send',
+        amountNum,
+        tokenType,
+        `Sent to ${recipient.slice(0, 8)}...${recipient.slice(-8)}`
       );
       
       if (onTransactionComplete) {
