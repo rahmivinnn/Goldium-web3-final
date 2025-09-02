@@ -1,0 +1,15 @@
+﻿version: '3.8'
+
+services:
+  goldium-defi:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_SOLANA_NETWORK=mainnet-beta
+      - NEXT_PUBLIC_RPC_URL=https://api.mainnet-beta.solana.com
+    volumes:
+      - .:/app
+      - /app/node_modules
+    restart: unless-stopped
