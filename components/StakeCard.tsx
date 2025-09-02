@@ -1,9 +1,17 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { motion } from 'framer-motion';
 import { Coins, TrendingUp, Clock, Award, ExternalLink } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { getSolscanUrl } from '../lib/solana';
+import { getSolscanUrl, connection } from '../lib/solana';
+import { 
+  getStakingPoolData, 
+  getUserStakeData, 
+  calculatePendingRewards,
+  createStakeTransaction,
+  createUnstakeTransaction,
+  createClaimRewardsTransaction
+} from '../lib/staking';
 
 interface StakingData {
   totalStaked: number;
@@ -14,7 +22,7 @@ interface StakingData {
 }
 
 const StakeCard: React.FC = () => {
-  const { publicKey } = useWallet();
+  const { publicKey, sendTransaction } = useWallet();
   const [amount, setAmount] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [stakingData, setStakingData] = useState<StakingData>({
@@ -26,16 +34,46 @@ const StakeCard: React.FC = () => {
   });
   const [lastTransactionSignature, setLastTransactionSignature] = useState<string | null>(null);
 
-  // Mock data - in real implementation, this would fetch from smart contract
+  // Fetch real staking data from smart contract
   useEffect(() => {
-    if (publicKey) {
-      // Simulate fetching user's staking data
-      setStakingData(prev => ({
-        ...prev,
-        userStaked: 1000, // Mock user staked amount
-        pendingRewards: 25.5 // Mock pending rewards
-      }));
-    }
+    const fetchStakingData = async () => {
+      if (publicKey) {
+        try {
+          const [poolData, userStakeData] = await Promise.all([
+            getStakingPoolData(),
+            getUserStakeData(publicKey)
+          ]);
+
+          if (poolData) {
+            let pendingRewards = 0;
+            let userStaked = 0;
+
+            if (userStakeData) {
+              userStaked = userStakeData.amount.toNumber() / 1e6; // Convert from smallest unit
+              pendingRewards = calculatePendingRewards(userStakeData, poolData) / 1e6;
+            }
+
+            setStakingData({
+              totalStaked: poolData.totalStaked.toNumber() / 1e6,
+              apy: poolData.rewardRate.toNumber() / 10, // Convert to percentage
+              userStaked,
+              pendingRewards,
+              stakingPeriod: poolData.lockPeriod.toNumber() / (24 * 60 * 60) // Convert to days
+            });
+          }
+        } catch (error) {
+          console.error('Error fetching staking data:', error);
+          // Fallback to mock data if contract not deployed yet
+          setStakingData(prev => ({
+            ...prev,
+            userStaked: 0,
+            pendingRewards: 0
+          }));
+        }
+      }
+    };
+
+    fetchStakingData();
   }, [publicKey]);
 
   const handleStake = async () => {
@@ -52,17 +90,18 @@ const StakeCard: React.FC = () => {
     try {
       setIsLoading(true);
       
-      // Mock staking transaction - in real implementation, this would call the smart contract
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Create and send real staking transaction
+      const transaction = await createStakeTransaction(publicKey, parseFloat(amount) * 1e6); // Convert to smallest unit
+      const signature = await sendTransaction(transaction, connection);
       
-      // Mock transaction signature
-      const mockSignature = 'stake_' + Date.now();
-      setLastTransactionSignature(mockSignature);
+      // Wait for confirmation
+      await connection.confirmTransaction(signature, 'confirmed');
+      setLastTransactionSignature(signature);
       
       toast.success('Successfully staked GOLD tokens!');
       
       // Show Solscan link
-      const solscanUrl = getSolscanUrl(mockSignature);
+      const solscanUrl = getSolscanUrl(signature);
       toast.success(
         <div>
           <p>Staking successful!</p>

@@ -1,4 +1,4 @@
-﻿import { Connection, PublicKey, clusterApiUrl } from '@solana/web3.js';
+import { Connection, PublicKey, clusterApiUrl } from '@solana/web3.js';
 import { TOKEN_PROGRAM_ID, getAccount, getAssociatedTokenAddress } from '@solana/spl-token';
 
 // Solana network configuration - MAINNET
@@ -70,13 +70,13 @@ export const getNetworkTPS = async (): Promise<number> => {
 
 // Solscan explorer URL generator
 export const getSolscanUrl = (signature: string): string => {
-  return https://solscan.io/tx/;
+  return `https://solscan.io/tx/${signature}`;
 };
 
 // Get transaction details from Solscan
 export const getTransactionDetails = async (signature: string) => {
   try {
-    const response = await fetch(https://public-api.solscan.io/transaction/);
+    const response = await fetch(`https://public-api.solscan.io/transaction/${signature}`);
     if (!response.ok) {
       throw new Error('Failed to fetch transaction details');
     }

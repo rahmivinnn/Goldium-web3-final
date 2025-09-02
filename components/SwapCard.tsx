@@ -1,13 +1,14 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { useSwapStore } from '../lib/store';
 import { motion } from 'framer-motion';
 import { ArrowUpDown, Coins, Zap, TrendingUp, ExternalLink } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { getSolscanUrl } from '../lib/solana';
+import { executeJupiterSwap, getJupiterQuote, TOKEN_MINTS } from '../lib/jupiter';
 
 const SwapCard: React.FC = () => {
-  const { publicKey } = useWallet();
+  const { publicKey, sendTransaction } = useWallet();
   const {
     fromToken,
     toToken,
@@ -28,24 +29,42 @@ const SwapCard: React.FC = () => {
   const [priceImpact, setPriceImpact] = useState<number>(0);
   const [lastSwapSignature, setLastSwapSignature] = useState<string | null>(null);
 
-  // Mock price fetching - in real implementation, this would use Jupiter API
+  // Real Jupiter API price fetching
   useEffect(() => {
     const fetchPrice = async () => {
       if (fromAmount && parseFloat(fromAmount) > 0) {
-        // Mock price calculation
-        const mockPrice = fromToken === 'SOL' ? 100 : 0.01; // 1 SOL = 100 GOLD, 1 GOLD = 0.01 SOL
-        setPrice(mockPrice);
-        
-        const calculatedAmount = parseFloat(fromAmount) * mockPrice;
-        setToAmount(calculatedAmount.toFixed(6));
-        
-        // Mock price impact calculation
-        setPriceImpact(0.1);
+        try {
+          const inputMint = TOKEN_MINTS[fromToken];
+          const outputMint = TOKEN_MINTS[toToken];
+          const amount = parseFloat(fromAmount);
+          
+          const quote = await getJupiterQuote(inputMint, outputMint, amount, slippage * 100);
+          
+          if (quote) {
+            const outputAmount = parseFloat(quote.outAmount) / (toToken === 'SOL' ? 1e9 : 1e6);
+            setToAmount(outputAmount.toFixed(6));
+            
+            const priceImpact = parseFloat(quote.priceImpactPct);
+            setPriceImpact(priceImpact);
+            
+            const pricePerToken = outputAmount / amount;
+            setPrice(pricePerToken);
+          }
+        } catch (error) {
+          console.error('Error fetching Jupiter quote:', error);
+          // Fallback to mock pricing if Jupiter API fails
+          const mockPrice = fromToken === 'SOL' ? 100 : 0.01;
+          setPrice(mockPrice);
+          const calculatedAmount = parseFloat(fromAmount) * mockPrice;
+          setToAmount(calculatedAmount.toFixed(6));
+          setPriceImpact(0.1);
+        }
       }
     };
 
-    fetchPrice();
-  }, [fromAmount, fromToken, setToAmount]);
+    const timeoutId = setTimeout(fetchPrice, 500); // Debounce API calls
+    return () => clearTimeout(timeoutId);
+  }, [fromAmount, fromToken, toToken, slippage, setToAmount]);
 
   const handleSwapTokens = () => {
     const newFromToken = toToken;
@@ -74,35 +93,43 @@ const SwapCard: React.FC = () => {
       setLoading(true);
       setError(null);
 
-      // Mock swap transaction - in real implementation, this would use Jupiter SDK
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Mock transaction signature
-      const mockSignature = 'mock_signature_' + Date.now();
-      setLastSwapSignature(mockSignature);
-      
-      toast.success('Swap completed successfully!');
-      
-      // Show Solscan link
-      const solscanUrl = getSolscanUrl(mockSignature);
-      toast.success(
-        <div>
-          <p>Swap completed successfully!</p>
-          <a 
-            href={solscanUrl} 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="text-blue-400 hover:text-blue-300 underline"
-          >
-            View on Solscan 
-          </a>
-        </div>,
-        { duration: 8000 }
+      // Execute real Jupiter swap
+      const signature = await executeJupiterSwap(
+        publicKey,
+        sendTransaction,
+        fromToken,
+        toToken,
+        parseFloat(fromAmount),
+        slippage * 100
       );
       
-      // Reset form
-      setFromAmount('');
-      setToAmount('');
+      if (signature) {
+        setLastSwapSignature(signature);
+        toast.success('Swap completed successfully!');
+        
+        // Show Solscan link
+        const solscanUrl = getSolscanUrl(signature);
+        toast.success(
+          <div>
+            <p>Swap completed successfully!</p>
+            <a 
+              href={solscanUrl} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-blue-400 hover:text-blue-300 underline"
+            >
+              View on Solscan 
+            </a>
+          </div>,
+          { duration: 8000 }
+        );
+        
+        // Reset form
+        setFromAmount('');
+        setToAmount('');
+      } else {
+        throw new Error('Failed to execute swap');
+      }
     } catch (error: any) {
       console.error('Swap failed:', error);
       setError(error.message || 'Swap failed');
