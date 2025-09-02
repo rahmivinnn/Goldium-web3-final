@@ -92,3 +92,5 @@ test-ledger/
 .anchor/
 target/
 test-ledger/
+
+/generated/prisma

@@ -2,9 +2,9 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import Navbar from '../components/Navbar';
 import SwapCard from '../components/SwapCard';
-import { Zap, TrendingUp, Shield } from 'lucide-react';
+import { TrendingUp, Zap, Shield } from 'lucide-react';
 
-const Swap: React.FC = () => {
+const SwapPage: React.FC = () => {
   return (
     <div className="min-h-screen">
       <Navbar />
@@ -12,7 +12,7 @@ const Swap: React.FC = () => {
       <main className="pt-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             className="text-center mb-12"
           >
@@ -30,7 +30,7 @@ const Swap: React.FC = () => {
 
           {/* Market Info */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
             className="mt-16"
@@ -45,7 +45,7 @@ const Swap: React.FC = () => {
                   <Zap className="w-6 h-6 text-white" />
                 </div>
                 <h3 className="text-xl font-bold text-white mb-2">SOL Price</h3>
-                <p className="text-2xl font-bold gradient-text">$150.50</p>
+                <p className="text-2xl font-bold gradient-text">.50</p>
                 <p className="text-sm text-green-400">+2.5% (24h)</p>
               </div>
               
@@ -54,7 +54,7 @@ const Swap: React.FC = () => {
                   <TrendingUp className="w-6 h-6 text-white" />
                 </div>
                 <h3 className="text-xl font-bold text-white mb-2">GOLD Price</h3>
-                <p className="text-2xl font-bold gradient-text">$1.245</p>
+                <p className="text-2xl font-bold gradient-text">.245</p>
                 <p className="text-sm text-green-400">+5.2% (24h)</p>
               </div>
               
@@ -63,7 +63,7 @@ const Swap: React.FC = () => {
                   <Shield className="w-6 h-6 text-white" />
                 </div>
                 <h3 className="text-xl font-bold text-white mb-2">Liquidity</h3>
-                <p className="text-2xl font-bold gradient-text">$2.4M</p>
+                <p className="text-2xl font-bold gradient-text">.4M</p>
                 <p className="text-sm text-white/70">Total Pool</p>
               </div>
             </div>
@@ -71,13 +71,13 @@ const Swap: React.FC = () => {
 
           {/* Features */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
+            transition={{ delay: 0.6 }}
             className="mt-20"
           >
             <h2 className="text-3xl font-bold gradient-text text-center mb-12">
-              Why Choose Goldium Swap?
+              Why Use Goldium Swap?
             </h2>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -120,4 +120,4 @@ const Swap: React.FC = () => {
   );
 };
 
-export default Swap;
+export default SwapPage;

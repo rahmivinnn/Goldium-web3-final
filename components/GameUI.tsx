@@ -5,6 +5,7 @@ import { Gamepad2, Trophy, Star, Coins, BookOpen, Zap, ExternalLink } from 'luci
 import toast from 'react-hot-toast';
 import { getSolscanUrl } from '../lib/solana';
 import { trackTransaction, showSolscanNotification } from '../lib/transaction-tracker';
+import { submitGameScore, mintNFTReward } from '../lib/auth';
 
 interface Question {
   id: number;
@@ -184,32 +185,73 @@ const GameUI: React.FC = () => {
     }
 
     try {
-      // Mock reward claiming - in real implementation, this would mint an NFT or send GOLD tokens
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Mock transaction signature for reward claiming
-      const mockSignature = `reward_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      
-      // Track reward transaction
-      await trackTransaction(
-        mockSignature,
-        'claim',
-        gameState.score * 10, // Reward amount based on score
-        'GOLD',
-        publicKey.toString()
+      // Submit game score to backend
+      const scoreResult = await submitGameScore(
+        publicKey.toString(),
+        gameState.score,
+        questions.length,
+        300 - gameState.timeLeft, // Time spent
+        'mixed'
       );
 
-      // Show enhanced Solscan notification for reward
-      showSolscanNotification(
-        mockSignature,
-        'claim',
-        gameState.score * 10,
-        'GOLD',
-        `Game Score: ${gameState.score}/${questions.length} • Bonus: ${gameState.score >= 8 ? 'Perfect!' : 'Good Job!'}`
-      );
+      if (scoreResult.success) {
+        const { reward, achievements } = scoreResult;
+        
+        // Track reward transaction if earned
+        if (reward.signature) {
+          await trackTransaction(
+            reward.signature,
+            'claim',
+            reward.amount,
+            'GOLD',
+            publicKey.toString()
+          );
 
-      toast.success('🎉 Reward claimed! Check your wallet and Solscan! ');
+          // Show enhanced Solscan notification for reward
+          showSolscanNotification(
+            reward.signature,
+            'claim',
+            reward.amount,
+            'GOLD',
+            `Game Score: ${gameState.score}/${questions.length} • ${achievements.perfectScore ? 'Perfect Score!' : 'Great Job!'}`
+          );
+        }
+
+        // Mint NFT if eligible
+        if (reward.nftEligible) {
+          try {
+            const nftResult = await mintNFTReward(
+              publicKey.toString(),
+              gameState.score,
+              'mixed',
+              achievements.perfectScore ? 'perfect_score' : 'excellent_score'
+            );
+            
+            if (nftResult.success) {
+              toast.success(
+                <div>
+                  <p>🏆 NFT Achievement Unlocked!</p>
+                  <a 
+                    href={nftResult.nft.solscanUrl} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-blue-400 hover:text-blue-300 underline text-sm"
+                  >
+                    View NFT on Solscan
+                  </a>
+                </div>,
+                { duration: 10000 }
+              );
+            }
+          } catch (nftError) {
+            console.error('NFT minting failed:', nftError);
+          }
+        }
+
+        toast.success(`🎉 ${reward.amount} GOLD earned! ${reward.nftEligible ? 'NFT unlocked!' : ''}`);
+      }
     } catch (error) {
+      console.error('Error claiming reward:', error);
       toast.error('Failed to claim reward');
     }
   };

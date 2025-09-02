@@ -5,6 +5,7 @@ import { Coins, TrendingUp, Clock, Award, ExternalLink } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { getSolscanUrl, connection } from '../lib/solana';
 import { trackTransaction, showSolscanNotification } from '../lib/transaction-tracker';
+import { recordStakingTransaction } from '../lib/auth';
 import { 
   getStakingPoolData, 
   getUserStakeData, 
@@ -107,6 +108,20 @@ const StakeCard: React.FC = () => {
       // Wait for confirmation
       await connection.confirmTransaction(signature, 'confirmed');
       setLastTransactionSignature(signature);
+
+      // Record staking transaction in backend
+      try {
+        await recordStakingTransaction(
+          publicKey.toString(),
+          parseFloat(amount),
+          signature,
+          stakingData.apy,
+          stakingData.stakingPeriod
+        );
+      } catch (backendError) {
+        console.error('Backend recording failed:', backendError);
+        // Continue even if backend fails
+      }
 
       // Show enhanced Solscan notification
       showSolscanNotification(

@@ -1,13 +1,51 @@
-﻿{
-  "buildCommand": "npm run build",
-  "outputDirectory": ".next",
-  "framework": "nextjs",
-  "installCommand": "npm install",
-  "devCommand": "npm run dev",
-  "regions": ["iad1"],
+{
+  "env": {
+    "NEXT_PUBLIC_SOLANA_NETWORK": "mainnet-beta",
+    "NEXT_PUBLIC_RPC_URL": "https://api.mainnet-beta.solana.com",
+    "NEXT_PUBLIC_JUPITER_API_URL": "https://quote-api.jup.ag/v6",
+    "NEXT_PUBLIC_METAPLEX_RPC_URL": "https://api.mainnet-beta.solana.com"
+  },
+  "build": {
+    "env": {
+      "DATABASE_URL": "@database_url"
+    }
+  },
   "functions": {
     "pages/api/**/*.ts": {
       "maxDuration": 30
     }
-  }
+  },
+  "redirects": [
+    {
+      "source": "/",
+      "has": [
+        {
+          "type": "query",
+          "key": "ref",
+          "value": "solscan"
+        }
+      ],
+      "destination": "/dashboard",
+      "permanent": false
+    }
+  ],
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, POST, PUT, DELETE, OPTIONS"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "Content-Type, Authorization"
+        }
+      ]
+    }
+  ]
 }

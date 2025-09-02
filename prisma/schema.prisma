@@ -1,0 +1,124 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(cuid())
+  walletAddress String   @unique
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // User stats
+  totalTransactions Int @default(0)
+  totalVolume       Float @default(0)
+  
+  // Gaming stats
+  gameScore         Int @default(0)
+  gamesPlayed       Int @default(0)
+  nftRewards        Int @default(0)
+  
+  // Learning progress
+  lessonsCompleted  Int @default(0)
+  
+  // Relations
+  transactions Transaction[]
+  stakingRecords StakingRecord[]
+  gameResults GameResult[]
+  
+  @@map("users")
+}
+
+model Transaction {
+  id          String   @id @default(cuid())
+  signature   String   @unique
+  type        String   // send, swap, stake, unstake, claim
+  amount      Float
+  token       String
+  fromAddress String?
+  toAddress   String?
+  status      String   // pending, confirmed, failed
+  fee         Float    @default(0)
+  slot        Int?
+  blockTime   DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+  
+  @@map("transactions")
+}
+
+model StakingRecord {
+  id            String   @id @default(cuid())
+  userAddress   String
+  amount        Float
+  stakingTime   DateTime
+  unstakingTime DateTime?
+  rewardsClaimed Float   @default(0)
+  isActive      Boolean  @default(true)
+  apy           Float
+  lockPeriod    Int      // in days
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // Relations
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+  
+  @@map("staking_records")
+}
+
+model GameResult {
+  id          String   @id @default(cuid())
+  score       Int
+  totalQuestions Int
+  timeSpent   Int      // in seconds
+  category    String
+  rewardClaimed Boolean @default(false)
+  rewardAmount Float   @default(0)
+  nftMinted   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  
+  // Relations
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+  
+  @@map("game_results")
+}
+
+model TokenPrice {
+  id        String   @id @default(cuid())
+  tokenMint String   @unique
+  symbol    String
+  price     Float
+  change24h Float    @default(0)
+  volume24h Float    @default(0)
+  updatedAt DateTime @updatedAt
+  
+  @@map("token_prices")
+}
+
+model StakingPool {
+  id          String   @id @default(cuid())
+  poolId      Int      @unique
+  totalStaked Float    @default(0)
+  apy         Float
+  lockPeriod  Int      // in days
+  totalRewards Float   @default(0)
+  isActive    Boolean  @default(true)
+  contractAddress String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("staking_pools")
+}

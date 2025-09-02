@@ -225,7 +225,7 @@ const SolscanDashboard: React.FC = () => {
             </h3>
             <p className="text-white/70 mb-4">
               Every transaction in Goldium is automatically tracked and verified on Solscan, 
-              Solana's premier blockchain explorer. View real-time confirmations, gas fees, 
+              Solana&apos;s premier blockchain explorer. View real-time confirmations, gas fees, 
               and detailed transaction data.
             </p>
             <div className="flex flex-wrap gap-2">

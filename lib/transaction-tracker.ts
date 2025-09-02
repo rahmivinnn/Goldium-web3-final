@@ -37,7 +37,7 @@ export const storeTransaction = (transaction: TransactionRecord): void => {
   
   try {
     const existing = getStoredTransactions();
-    const updated = [transaction, ...existing].slice(0, 100); // Keep last 100 transactions
+    const updated = [transaction, ...existing].slice(0, 100);
     localStorage.setItem(TRANSACTIONS_STORAGE_KEY, JSON.stringify(updated));
   } catch (error) {
     console.error('Error storing transaction:', error);
@@ -70,7 +70,6 @@ export const trackTransaction = async (
   userAddress?: string,
   recipientAddress?: string
 ): Promise<void> => {
-  // Create transaction record
   const transaction: TransactionRecord = {
     signature,
     type,
@@ -82,42 +81,22 @@ export const trackTransaction = async (
     toAddress: recipientAddress,
   };
 
-  // Store transaction immediately
   storeTransaction(transaction);
 
-  // Show immediate notification with Solscan link
   const solscanUrl = getSolscanUrl(signature);
   
   toast.success(
-    <div className="flex flex-col space-y-2">
-      <div className="flex items-center space-x-2">
-        <span className="text-green-400">✅</span>
-        <span className="font-semibold">Transaction Submitted</span>
-      </div>
-      <div className="text-sm text-gray-300">
-        {getTransactionDescription(type, amount, token)}
-      </div>
-      <a 
-        href={solscanUrl} 
-        target="_blank" 
-        rel="noopener noreferrer"
-        className="text-blue-400 hover:text-blue-300 underline text-sm flex items-center space-x-1"
-      >
-        <span>📊 Track on Solscan</span>
-        <span>↗</span>
-      </a>
-    </div>,
+    `Transaction submitted! Track on Solscan: ${solscanUrl}`,
     { 
       duration: 8000,
-      id: `tx-${signature}` // Prevent duplicate toasts
+      id: `tx-${signature}`
     }
   );
 
-  // Monitor transaction status
   monitorTransactionStatus(signature, type, amount, token);
 };
 
-// Monitor transaction status and update accordingly
+// Monitor transaction status
 const monitorTransactionStatus = async (
   signature: string,
   type: TransactionRecord['type'],
@@ -125,42 +104,19 @@ const monitorTransactionStatus = async (
   token: string
 ): Promise<void> => {
   let attempts = 0;
-  const maxAttempts = 30; // Monitor for up to 30 attempts (about 2 minutes)
+  const maxAttempts = 30;
 
   const checkStatus = async () => {
     try {
       attempts++;
       
-      // Get transaction details from Solscan
       const details = await getTransactionDetails(signature);
       
       if (details) {
-        // Transaction confirmed
         updateTransactionStatus(signature, 'confirmed', details);
         
         toast.success(
-          <div className="flex flex-col space-y-2">
-            <div className="flex items-center space-x-2">
-              <span className="text-green-400">🎉</span>
-              <span className="font-semibold">Transaction Confirmed!</span>
-            </div>
-            <div className="text-sm text-gray-300">
-              {getTransactionDescription(type, amount, token)}
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-gray-400">
-                Block: {details.slot || 'N/A'}
-              </span>
-              <a 
-                href={getSolscanUrl(signature)} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-blue-400 hover:text-blue-300 underline text-xs"
-              >
-                View Details 📊
-              </a>
-            </div>
-          </div>,
+          `Transaction confirmed! ${getTransactionDescription(type, amount, token)}`,
           { 
             duration: 10000,
             id: `confirmed-${signature}`
@@ -169,30 +125,12 @@ const monitorTransactionStatus = async (
         return;
       }
       
-      // Continue monitoring if not confirmed and haven't exceeded max attempts
       if (attempts < maxAttempts) {
-        setTimeout(checkStatus, 4000); // Check every 4 seconds
+        setTimeout(checkStatus, 4000);
       } else {
-        // Transaction might have failed or taking too long
         updateTransactionStatus(signature, 'failed');
         toast.error(
-          <div className="flex flex-col space-y-2">
-            <div className="flex items-center space-x-2">
-              <span className="text-red-400">⚠️</span>
-              <span className="font-semibold">Transaction Status Unknown</span>
-            </div>
-            <div className="text-sm text-gray-300">
-              Please check Solscan for transaction status
-            </div>
-            <a 
-              href={getSolscanUrl(signature)} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-blue-400 hover:text-blue-300 underline text-sm"
-            >
-              Check on Solscan 📊
-            </a>
-          </div>,
+          `Transaction status unknown. Check Solscan: ${getSolscanUrl(signature)}`,
           { duration: 8000 }
         );
       }
@@ -204,7 +142,6 @@ const monitorTransactionStatus = async (
     }
   };
 
-  // Start monitoring after a short delay
   setTimeout(checkStatus, 2000);
 };
 
@@ -230,7 +167,7 @@ const getTransactionDescription = (
   }
 };
 
-// Enhanced Solscan notification with rich information
+// Enhanced Solscan notification
 export const showSolscanNotification = (
   signature: string,
   type: TransactionRecord['type'],
@@ -239,60 +176,11 @@ export const showSolscanNotification = (
   additionalInfo?: string
 ): void => {
   const solscanUrl = getSolscanUrl(signature);
+  const description = getTransactionDescription(type, amount, token);
   
-  toast.custom(
-    (t) => (
-      <motion.div
-        initial={{ opacity: 0, x: 300 }}
-        animate={{ opacity: 1, x: 0 }}
-        exit={{ opacity: 0, x: 300 }}
-        className="bg-gradient-to-r from-slate-800 to-slate-900 p-4 rounded-lg border border-gold-400/30 shadow-xl max-w-md"
-      >
-        <div className="flex items-start space-x-3">
-          <div className="flex-shrink-0">
-            <div className="w-8 h-8 bg-gold-400/20 rounded-full flex items-center justify-center">
-              <span className="text-gold-400 text-sm">📊</span>
-            </div>
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-white font-semibold text-sm">
-                Solscan Tracking
-              </h3>
-              <button
-                onClick={() => toast.dismiss(t.id)}
-                className="text-gray-400 hover:text-white"
-              >
-                ✕
-              </button>
-            </div>
-            <p className="text-gray-300 text-sm mb-2">
-              {getTransactionDescription(type, amount, token)}
-            </p>
-            {additionalInfo && (
-              <p className="text-gray-400 text-xs mb-2">{additionalInfo}</p>
-            )}
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-gray-500 font-mono">
-                {signature.slice(0, 8)}...{signature.slice(-8)}
-              </span>
-              <a
-                href={solscanUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="bg-gold-500/20 hover:bg-gold-500/30 text-gold-400 px-3 py-1 rounded text-xs font-medium transition-colors"
-              >
-                View on Solscan ↗
-              </a>
-            </div>
-          </div>
-        </div>
-      </motion.div>
-    ),
-    { 
-      duration: 12000,
-      position: 'top-right'
-    }
+  toast.success(
+    `${description} - View on Solscan: ${solscanUrl} ${additionalInfo ? `(${additionalInfo})` : ''}`,
+    { duration: 12000 }
   );
 };
 
@@ -303,13 +191,14 @@ export const useTransactionHistory = () => {
   React.useEffect(() => {
     setTransactions(getStoredTransactions());
     
-    // Listen for storage changes
     const handleStorageChange = () => {
       setTransactions(getStoredTransactions());
     };
 
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+    if (typeof window !== 'undefined') {
+      window.addEventListener('storage', handleStorageChange);
+      return () => window.removeEventListener('storage', handleStorageChange);
+    }
   }, []);
 
   return transactions;

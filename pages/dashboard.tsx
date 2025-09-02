@@ -4,6 +4,7 @@ import Navbar from '../components/Navbar';
 import SolscanDashboard from '../components/SolscanDashboard';
 import TransactionHistory from '../components/TransactionHistory';
 import LiveSolscanFeed from '../components/LiveSolscanFeed';
+import Portfolio from '../components/Portfolio';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Activity, BarChart3, History, ExternalLink } from 'lucide-react';
 
@@ -73,23 +74,27 @@ const Dashboard: React.FC = () => {
               </button>
             </motion.div>
           ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Left Column */}
-              <div className="space-y-8">
-                {/* Solscan Dashboard */}
-                <SolscanDashboard />
-              </div>
+            <div className="space-y-8">
+              {/* Portfolio Overview */}
+              <Portfolio />
               
-              {/* Right Column */}
-              <div className="space-y-8">
-                {/* Live Solscan Feed */}
-                <LiveSolscanFeed />
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Left Column */}
+                <div className="space-y-8">
+                  {/* Solscan Dashboard */}
+                  <SolscanDashboard />
+                </div>
+                
+                {/* Right Column */}
+                <div className="space-y-8">
+                  {/* Live Solscan Feed */}
+                  <LiveSolscanFeed />
+                </div>
               </div>
             </div>
             
+            {/* Quick Actions */}
             <div className="mt-8 space-y-8">
-
-              {/* Quick Actions */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
